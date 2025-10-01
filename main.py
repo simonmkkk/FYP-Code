@@ -3,10 +3,15 @@ import numpy as np
 import os
 import sys
 from datetime import datetime
-import argparse
 
 # 添加当前目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from core.simulation import run_parallel_simulation
+from analysis.metrics import calculate_performance_metrics
+from visualization.plotting import plot_single_results, plot_scan_results
+from utils.file_io import save_single_results_to_csv, save_scan_results_to_csv
+from analysis.theoretical import theoretical_calculation
 
 # ============================================================================
 # 配置參數設置（整合自 settings.py）
@@ -28,23 +33,9 @@ SCAN_RANGE = range(5, 46, 1)  # 掃描範圍: N=5,6,7,...,45
 NUM_SAMPLES = 5000   # 樣本數量 - 每個參數點的模擬次數（論文使用 10^7）
 NUM_WORKERS = 16     # 並行進程數 - CPU核心數（建議設置為實際CPU核心數）
 
-# ===== Figure 生成配置（用於論文圖表）=====
-FIGURE_N_VALUES = [3]   # Figure 1 & 2 要分析的 N 值列表
-FIGURE_N_JOBS = 16      # Figure 分析的並行進程數
-
 # ===== 輸出設置 =====
 PLOT_RESULTS = True     # 是否繪製結果圖表
 SAVE_TO_CSV = True      # 是否保存結果到CSV文件
-
-# ============================================================================
-# 導入模組
-# ============================================================================
-
-from core.simulation import run_parallel_simulation
-from analysis.metrics import calculate_performance_metrics
-from visualization.plotting import plot_single_results, plot_scan_results
-from utils.file_io import save_single_results_to_csv, save_scan_results_to_csv
-from analysis.theoretical import theoretical_calculation
 
 def run_single_simulation():
     """
@@ -188,38 +179,8 @@ def run_parameter_scan():
 
 def main():
     """
-    主函数，支持命令行參數
+    主函數 - 根據 RUN_MODE 執行單點模擬或參數掃描
     """
-    parser = argparse.ArgumentParser(description='ALOHA 模擬器')
-    parser.add_argument('--benchmark', action='store_true',
-                       help='運行性能比較測試')
-    
-    args = parser.parse_args()
-    
-    # 如果要運行性能測試
-    if args.benchmark:
-        print("運行性能測試...")
-        from core.simulation import simulate_single_sample
-
-        def cpu_simulate_batch(M, N, I_max, num_samples):
-            """CPU 批量模擬函數（用於比較測試）"""
-            results = []
-            for _ in range(num_samples):
-                result = simulate_single_sample(M, N, I_max)
-                results.append(result)
-            results_array = np.array(results)
-            return np.mean(results_array, axis=0)
-
-        # 運行CPU性能測試
-        import time
-        start_time = time.time()
-        cpu_results = cpu_simulate_batch(M, N, I_max, 1000)
-        cpu_time = time.time() - start_time
-        print(f"CPU 結果: 成功率={cpu_results[0]:.4f}, 延遲={cpu_results[1]:.2f}, 碰撞率={cpu_results[2]:.4f}")
-        print(f"CPU 時間: {cpu_time:.3f} 秒")
-        return
-    
-    # 正常模擬執行
     if RUN_MODE == 'single':
         run_single_simulation()
     elif RUN_MODE == 'scan':
