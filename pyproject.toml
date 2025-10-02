@@ -1,7 +1,7 @@
 [project]
-name = "fyp-yuanbao-modular"
+name = "fyp-code"
 version = "0.1.0"
-description = "FYP Yuan Bao Modular Analysis Project"
+description = "FYP Analysis Project"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

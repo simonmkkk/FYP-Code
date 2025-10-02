@@ -37,7 +37,7 @@ from analysis.formulas import (
     paper_formula_4_success_approx,
     paper_formula_5_collision_approx
 )
-from core.simulation import simulate_single_access_parallel
+from core.simulation import simulate_one_shot_access_multi_samples
 
 
 # ============================================================================
@@ -256,9 +256,9 @@ def generate_simulation_vs_approximation_data(n_values, n_jobs, num_samples):
             theory_ns = paper_formula_4_success_approx(M, N)
             theory_nc = paper_formula_5_collision_approx(M, N)
             
-            # 執行模擬（內部也會並行）
-            sim_ns, sim_nc, sim_idle = simulate_single_access_parallel(
-                M, N, num_samples, n_jobs=1  # 外層已並行，內層用單線程
+            # 執行模擬（每批 100 萬樣本）
+            sim_ns, sim_nc, sim_idle = simulate_one_shot_access_multi_samples(
+                M, N, num_samples=num_samples, num_workers=1  # 單線程以節省記憶體
             )
             
             # 計算相對誤差百分比
@@ -276,16 +276,18 @@ def generate_simulation_vs_approximation_data(n_values, n_jobs, num_samples):
             }
         
         # 並行處理所有 M 值（分批顯示進度）
-        # 每批處理 n_jobs 個 M 值，顯示批次進度
+        # 每批 16 個 M 值並行，每個 M 值分 10 批處理（每批 100 萬樣本）
+        max_parallel_jobs = n_jobs  # 使用完整的並行數量
         all_results = []
-        num_batches = (len(M_range) + n_jobs - 1) // n_jobs  # 向上取整
+        num_batches = (len(M_range) + max_parallel_jobs - 1) // max_parallel_jobs  # 向上取整
         
-        print(f"  分 {num_batches} 批處理，每批最多 {n_jobs} 個核心並行...")
+        print(f"  分 {num_batches} 批處理，每批最多 {max_parallel_jobs} 個核心並行...")
+        print(f"  ⚠️  峰值內存預估: ~{max_parallel_jobs * 24} MB (每批100萬樣本約24MB × {max_parallel_jobs}個並行)")
         
         # 將 M_range 分批處理
         for batch_idx in range(num_batches):
-            start_idx = batch_idx * n_jobs
-            end_idx = min((batch_idx + 1) * n_jobs, len(M_range))
+            start_idx = batch_idx * max_parallel_jobs
+            end_idx = min((batch_idx + 1) * max_parallel_jobs, len(M_range))
             batch_M_values = M_range[start_idx:end_idx]
             batch_num = batch_idx + 1
             
@@ -293,7 +295,7 @@ def generate_simulation_vs_approximation_data(n_values, n_jobs, num_samples):
             
             # 並行處理當前批次的 M 值
             batch_start_time = time.time()
-            batch_results = Parallel(n_jobs=n_jobs)(
+            batch_results = Parallel(n_jobs=max_parallel_jobs)(
                 delayed(process_single_M)(M, N, num_samples)
                 for M in batch_M_values
             )

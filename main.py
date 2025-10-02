@@ -7,7 +7,7 @@ from datetime import datetime
 # 添加当前目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from core.simulation import run_parallel_simulation
+from core.simulation import simulate_group_paging_multi_samples
 from analysis.metrics import calculate_performance_metrics
 from visualization.plotting import plot_single_results, plot_scan_results
 from utils.file_io import save_single_results_to_csv, save_scan_results_to_csv
@@ -30,7 +30,7 @@ SCAN_PARAM = 'N'              # 掃描參數: 'N', 'M', 'I_max'
 SCAN_RANGE = range(5, 46, 1)  # 掃描範圍: N=5,6,7,...,45
 
 # ===== 性能優化參數（計算資源配置）=====
-NUM_SAMPLES = 5000000   # 樣本數量 - 每個參數點的模擬次數（論文使用 10^7）
+NUM_SAMPLES = 100   # 樣本數量 - 每個參數點的模擬次數（論文使用 10^7）
 NUM_WORKERS = 16     # 並行進程數 - CPU核心數（建議設置為實際CPU核心數）
 
 # ===== 輸出設置 =====
@@ -51,7 +51,7 @@ def run_single_simulation():
     print("=" * 60)
 
     # 使用CPU并行模拟
-    results_array = run_parallel_simulation(M, N, I_max, NUM_SAMPLES, NUM_WORKERS)
+    results_array = simulate_group_paging_multi_samples(M, N, I_max, NUM_SAMPLES, NUM_WORKERS)
 
     # 计算性能指标
     means, confidence_intervals = calculate_performance_metrics(results_array)
@@ -145,7 +145,7 @@ def run_parameter_scan():
         
         print("使用CPU並行模擬...")
         # 使用 CPU 並行模擬
-        results_array = run_parallel_simulation(
+        results_array = simulate_group_paging_multi_samples(
             current_M, current_N, current_I_max, NUM_SAMPLES, NUM_WORKERS
         )
         means, _ = calculate_performance_metrics(results_array)
