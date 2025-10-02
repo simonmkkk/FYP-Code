@@ -156,7 +156,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fyp-yuanbao-modular"
+name = "fyp-code"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
