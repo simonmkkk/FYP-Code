@@ -185,6 +185,13 @@ python main.py
 
 默認配置：M=100, N=40, I_max=10, NUM_SAMPLES=100
 
+**輸出內容：**
+- ✅ 第一個樣本的詳細過程（10個AC的逐行結果）
+- 📊 原始數據統計（成功、失敗、碰撞、空閒RAO的統計量）
+- 📈 性能指標（P_S, T_a, P_C 及 95%置信區間）
+- 📐 理論值對比（論文公式計算結果）
+- 🔍 誤差分析（模擬值 vs 理論值的相對誤差）
+
 #### 2. 參數掃描（生成 Figure 3-5）
 
 修改 `main.py` 中的配置：
@@ -195,15 +202,63 @@ SCAN_PARAM = 'N'         # 掃描參數：'N', 'M', 或 'I_max'
 SCAN_RANGE = range(5, 46, 1)  # 掃描範圍
 ```
 
-#### 3. 生成論文 Figure 1 & 2
+## 🧪 測試腳本
+
+本項目提供了簡化的測試腳本，方便快速驗證模擬功能：
+
+### 單個AC測試
 
 ```bash
-# 分析模型版本（精確值 vs 近似公式）
-python scripts/generate_figure1_figure2_analytical.py
-
-# 模擬驗證版本（模擬值 vs 近似公式）
-python scripts/generate_figure1_figure2_simulation.py
+cd core
+python test_single_ac.py
 ```
+
+**功能：** 測試單個接入周期（AC）的隨機接入過程
+
+**輸出：** 
+- RAO 層面統計（成功、碰撞、空閒）
+- 設備層面統計（成功率）
+- 每次運行結果略有不同（隨機性）
+
+### 完整群組尋呼測試
+
+```bash
+cd core
+python test_full_group_paging.py
+```
+
+**功能：** 測試完整的群組尋呼過程（I_max 個 AC）
+
+**輸出：**
+- 接入成功率 (P_S)
+- 平均接入延遲 (T_a)
+- 碰撞概率 (P_C)
+
+**說明：** 這些測試腳本使用 `core/simulation.py` 中的核心函數，是學習模擬流程的好起點。
+
+## 🔄 核心函數概述
+
+### simulation.py 中的三層函數
+
+1. **`simulate_one_shot_access_single_sample(M, N)`** - 最小單元
+   - 輸入：M個設備、N個RAO
+   - 輸出：(成功RAO, 碰撞RAO, 空閒RAO)
+   - 用途：測試單個AC
+
+2. **`simulate_one_shot_access_multi_samples(M, N, num_samples, num_workers)`**
+   - 輸入：M、N、樣本數、並行工作進程
+   - 輸出：(平均成功RAO, 平均碰撞RAO, 平均空閒RAO)
+   - 用途：生成Figure 1-2
+
+3. **`simulate_group_paging_single_sample(M, N, I_max)`** - 完整群組尋呼
+   - 輸入：M、N、最大AC數
+   - 輸出：(P_S, T_a, P_C)
+   - 用途：單次完整模擬
+
+4. **`simulate_group_paging_multi_samples(M, N, I_max, num_samples, num_workers)`**
+   - 輸入：M、N、I_max、樣本數、並行工作進程
+   - 輸出：Shape [num_samples, 3] 的結果矩陣
+   - 用途：生成Figure 3-5、參數掃描
 
 ### 性能配置
 
