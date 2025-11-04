@@ -18,11 +18,11 @@ from analysis.theoretical import theoretical_calculation
 # ============================================================================
 
 # ===== 運行模式 =====
-RUN_MODE = 'single'  # 'single': 单点模拟, 'scan': 参数扫描
+RUN_MODE = 'scan'  # 'single': 单点模拟, 'scan': 参数扫描
 
 # ===== 模擬本質參數（ALOHA系統參數）===== （This N for single）
 M = 100           # 設備總數 - 嘗試接入網絡的設備數量
-N = 40            # RAO數量 - 每個接入周期(AC)的隨機接入機會(RAO)數量
+N = 30            # RAO數量 - 每個接入周期(AC)的隨機接入機會(RAO)數量
 I_max = 10        # 最大接入周期數 - 最大重傳次數限制
 
 # ===== 參數掃描設置（僅在 RUN_MODE='scan' 時生效）=====
@@ -30,7 +30,7 @@ SCAN_PARAM = 'N'              # 掃描參數: 'N', 'M', 'I_max'
 SCAN_RANGE = range(5, 46, 1)  # 掃描範圍: N=5,6,7,...,45
 
 # ===== 性能優化參數（計算資源配置）=====
-NUM_SAMPLES = 100   # 樣本數量 - 每個參數點的模擬次數（論文使用 10^7）
+NUM_SAMPLES = 1000   # 樣本數量 - 每個參數點的模擬次數（論文使用 10^7）
 NUM_WORKERS = 16     # 並行進程數 - CPU核心數（建議設置為實際CPU核心數）
 
 # ===== 輸出設置 =====
@@ -39,37 +39,97 @@ SAVE_TO_CSV = True      # 是否保存結果到CSV文件
 
 def run_single_simulation():
     """
-    运行单点模拟
+    运行单点模拟 - 展示詳細原始數據和性能指標
     """
-    print("=" * 60)
+    print("=" * 70)
     print("多信道时隙ALOHA系统模拟器 - 专注于群组寻呼场景")
-    print("=" * 60)
+    print("=" * 70)
     print(f"模拟参数: M={M}, N={N}, I_max={I_max}")
     print(f"样本数量: {NUM_SAMPLES}")
     print("使用 CPU 並行模擬")
     print(f"並行進程: {NUM_WORKERS}")
-    print("=" * 60)
+    print("=" * 70)
 
     # 使用CPU并行模拟
     results_array = simulate_group_paging_multi_samples(M, N, I_max, NUM_SAMPLES, NUM_WORKERS)
 
-    # 计算性能指标
+    # 計算性能指標
     means, confidence_intervals = calculate_performance_metrics(results_array)
     mean_ps, mean_ta, mean_pc = means
     ci_ps, ci_ta, ci_pc = confidence_intervals
     
-    # 打印结果
-    print("\n模拟结果:")
-    print(f"接入成功率 (P_S): {mean_ps:.6f} ± {ci_ps:.6f} (95% 置信区间)")
-    print(f"平均接入延迟 (T_a): {mean_ta:.6f} ± {ci_ta:.6f} (95% 置信区间)")
-    print(f"碰撞概率 (P_C): {mean_pc:.6f} ± {ci_pc:.6f} (95% 置信区间)")
+    # ========== 計算原始數據統計 ==========
+    print("\n" + "=" * 70)
+    print("【原始數據統計】（單個樣本的詳細過程）")
+    print("=" * 70)
     
-    # 计算理论值
+    # 使用 simulate_group_paging_single_sample 重新運行一次獲取詳細過程
+    from core.simulation import simulate_group_paging_single_sample
+    
+    # 手動追蹤單個樣本的詳細過程
+    print(f"\n【樣本 #1 的詳細過程】（M={M}, N={N}, I_max={I_max}）")
+    print(f"💡 提示: 共有 {NUM_SAMPLES} 個樣本，下面只展示第一個樣本的詳細過程")
+    print(f"AC編號 | 競爭設備 | ✅成功 | ❌碰撞RAO | ⭕空閒RAO | 剩餘設備")
+    print("-" * 65)
+    
+    remaining_devices = M
+    for ac_index in range(1, I_max + 1):
+        if remaining_devices == 0:
+            print(f"{ac_index:2d}     | {0:3d}     | {0:3d}   | {0:3d}      | {N:3d}      | {0:3d}")
+            continue
+        
+        # 執行當前 AC 的隨機接入
+        from core.simulation import simulate_one_shot_access_single_sample
+        success_raos, collision_raos, idle_raos = simulate_one_shot_access_single_sample(remaining_devices, N)
+        
+        # 計算成功設備數就是成功RAO數（一對一對應）
+        success_devices = success_raos
+        
+        # 更新剩餘設備
+        new_remaining = remaining_devices - success_devices
+        
+        print(f"{ac_index:2d}     | {remaining_devices:3d}     | {success_devices:3d}   | {collision_raos:3d}      | {idle_raos:3d}      | {new_remaining:3d}")
+        
+        remaining_devices = new_remaining
+    
+    print(f"\n【樣本 #1 的結果統計】")
+    print(f"  ✅ 最終成功接入設備數: {M - remaining_devices} / {M}")
+    print(f"  ❌ 未成功接入設備數: {remaining_devices} / {M}")
+    print(f"\n  (以上數據來自 {NUM_SAMPLES} 個樣本中的第一個樣本）")
+    
+    # ========== 輸出性能指標 ==========
+    print("\n" + "=" * 70)
+    print("【性能指標】（多樣本統計平均）")
+    print("=" * 70)
+    print(f"\n✅ 接入成功率 (P_S):     {mean_ps:.6f} ± {ci_ps:.6f} (95% 置信區間)")
+    print(f"   含義: 有 {mean_ps*100:.2f}% 的設備在 {I_max} 個AC內成功接入")
+    
+    print(f"\n⏱️  平均接入延遲 (T_a):   {mean_ta:.6f} ± {ci_ta:.6f} (95% 置信區間)")
+    print(f"   含義: 成功設備平均需要 {mean_ta:.2f} 個接入周期")
+    
+    print(f"\n❌ 碰撞概率 (P_C):       {mean_pc:.6f} ± {ci_pc:.6f} (95% 置信區間)")
+    print(f"   含義: 有 {mean_pc*100:.2f}% 的RAO發生碰撞")
+    
+    # ========== 計算理論值 ==========
+    print("\n" + "=" * 70)
+    print("【理論值】（論文公式計算）")
+    print("=" * 70)
     ps_theory, ta_theory, pc_theory, _, _ = theoretical_calculation(M, N, I_max)
-    print("\n理论值 (论文方法):")
-    print(f"接入成功率 (P_S): {ps_theory:.6f}")
-    print(f"平均接入延迟 (T_a): {ta_theory:.6f}")
-    print(f"碰撞概率 (P_C): {pc_theory:.6f}")
+    print(f"\n✅ 接入成功率 (P_S):     {ps_theory:.6f}")
+    print(f"⏱️  平均接入延遲 (T_a):   {ta_theory:.6f}")
+    print(f"❌ 碰撞概率 (P_C):       {pc_theory:.6f}")
+    
+    # ========== 計算誤差 ==========
+    print("\n" + "=" * 70)
+    print("【模擬 vs 理論誤差】")
+    print("=" * 70)
+    error_ps = abs(mean_ps - ps_theory) / ps_theory * 100 if ps_theory != 0 else 0
+    error_ta = abs(mean_ta - ta_theory) / ta_theory * 100 if ta_theory != 0 else 0
+    error_pc = abs(mean_pc - pc_theory) / pc_theory * 100 if pc_theory != 0 else 0
+    
+    print(f"\n  P_S 誤差: {error_ps:.2f}%")
+    print(f"  T_a 誤差: {error_ta:.2f}%")
+    print(f"  P_C 誤差: {error_pc:.2f}%")
     
     # 绘制结果
     if PLOT_RESULTS:

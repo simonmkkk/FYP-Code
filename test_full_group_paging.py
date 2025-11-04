@@ -16,8 +16,8 @@ import sys
 import os
 import numpy as np
 
-# 從同目錄的 simulation 模組引用核心函數
-from simulation import simulate_group_paging_single_sample
+# 從 core 模組引用核心函數
+from core.simulation import simulate_group_paging_single_sample
 
 # ============================================================================
 # 配置參數
