@@ -18,9 +18,9 @@ from analysis.theoretical import theoretical_calculation
 # ============================================================================
 
 # ===== 運行模式 =====
-RUN_MODE = 'scan'  # 'single': 单点模拟, 'scan': 参数扫描
+RUN_MODE = 'single'  # 'single': 单点模拟, 'scan': 参数扫描
 
-# ===== 模擬本質參數（ALOHA系統參數）=====
+# ===== 模擬本質參數（ALOHA系統參數）===== （This N for single）
 M = 100           # 設備總數 - 嘗試接入網絡的設備數量
 N = 40            # RAO數量 - 每個接入周期(AC)的隨機接入機會(RAO)數量
 I_max = 10        # 最大接入周期數 - 最大重傳次數限制
