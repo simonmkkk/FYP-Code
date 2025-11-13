@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import numpy as np
 
-def save_single_results_to_csv(results_array, M, N, I_max, num_samples, output_dir='data/results'):
+def save_single_results_to_csv(results_array, M, N, I_max, num_samples, output_dir='data_graph/results'):
     """
     保存单点模拟结果到CSV文件
     """
@@ -39,7 +39,7 @@ def save_single_results_to_csv(results_array, M, N, I_max, num_samples, output_d
     print(f"结果已保存到: {filepath}")
     return filepath
 
-def save_scan_results_to_csv(param_values, P_S_values, T_a_values, P_C_values, scan_param, M, I_max, output_dir='data/results'):
+def save_scan_results_to_csv(param_values, P_S_values, T_a_values, P_C_values, scan_param, M, I_max, output_dir='data_graph/results'):
     """
     保存扫描结果到CSV文件
     """

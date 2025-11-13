@@ -441,7 +441,7 @@ def main():
     
     # 繪製與保存
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    figures_dir = os.path.join('data', 'figures')
+    figures_dir = os.path.join('data_graph', 'graphs')
     os.makedirs(figures_dir, exist_ok=True)
     
     print("\n正在繪製組合圖表...")

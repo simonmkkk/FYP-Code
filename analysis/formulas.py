@@ -216,7 +216,6 @@ def paper_formula_1_pk_probability(M: int, N1: int, k: int) -> float:
     # 使用緩存版本
     return _paper_formula_1_pk_probability_impl(M, N1, k)
 
-
 @lru_cache(maxsize=10000)
 def _paper_formula_1_pk_probability_impl(M: int, N1: int, k: int) -> float:
     """

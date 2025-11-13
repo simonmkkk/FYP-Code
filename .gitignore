@@ -140,10 +140,10 @@ logs/
 temp/
 
 # Exclude all figures and data results but keep the directories
-data/figures/*
-data/results/*
-aloha_simulation/data/figures/*
-aloha_simulation/data/results/*
+data_graph/graphs/*
+data_graph/results/*
+aloha_simulation/data_graph/graphs/*
+aloha_simulation/data_graph/results/*
 
 # Keep .gitkeep files to maintain directory structure
 !.gitkeep

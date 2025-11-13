@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core.simulation import simulate_group_paging_multi_samples
 from analysis.metrics import calculate_performance_metrics
 from visualization.plotting import plot_single_results, plot_scan_results
-from utils.file_io import save_single_results_to_csv, save_scan_results_to_csv
+from data_csv.file_io import save_single_results_to_csv, save_scan_results_to_csv
 from analysis.theoretical import theoretical_calculation
 
 # ============================================================================
@@ -270,7 +270,7 @@ def main():
             
             # 保存合併的 Figure 3-5
             combined_filename = f"figures_3_4_5_combined_{SCAN_PARAM}_{timestamp}.png"
-            combined_filepath = os.path.join('data', 'figures', combined_filename)
+            combined_filepath = os.path.join('data_graph', 'graphs', combined_filename)
             os.makedirs(os.path.dirname(combined_filepath), exist_ok=True)
             combined_fig.savefig(combined_filepath, dpi=300, bbox_inches='tight')
             print(f"合併的 Figure 3-5 已保存到: {combined_filepath}")
